@@ -24,6 +24,9 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'ch.qos.logback:logback-classic:1.4.5'
+
+
 	implementation 'com.google.api-client:google-api-client:1.23.0'
 	implementation 'com.google.apis:google-api-services-gmail:v1-rev82-1.23.0'
 	implementation 'com.google.oauth-client:google-oauth-client-jetty:1.23.0'

@@ -6,6 +6,8 @@ import com.simplbox.indexer.model.Email;
 import com.simplbox.indexer.repository.EmailRepository;
 import com.simplbox.indexer.utils.EmailExtractionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -15,23 +17,25 @@ import java.util.Objects;
 
 
 @Service
+
 public class EmailIndexerService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(EmailIndexerService.class);
     private final GmailApiClient gmailApiClient;
     private final EmailRepository emailRepository;
-    private final Gmail gmailService;
 
     @Autowired
-    public EmailIndexerService(GmailApiClient gmailApiClient, EmailRepository emailRepository) throws GeneralSecurityException, IOException {
-        this.gmailApiClient = gmailApiClient;
+    public EmailIndexerService(GmailApiClient gmailApiClient, EmailRepository emailRepository) {
         this.emailRepository = emailRepository;
-        this.gmailService = GmailApiClient.getGmailService();
+        this.gmailApiClient = gmailApiClient;
     }
 
     public List<Email> fetchEmails(String user) throws IOException, GeneralSecurityException {
 
-        List<Message> messages = gmailService.users().messages().list(user).execute().getMessages();
 
+        Gmail gmailInstance = gmailApiClient.getGmailService();
+        LOG.info("Loaded Gmail Account of user {}. Fetching Emails", user);
+        List<Message> messages = gmailInstance.users().messages().list(user).execute().getMessages();
         return messages.stream()
                 .map(
                         email ->
@@ -39,7 +43,7 @@ public class EmailIndexerService {
                             // Fetch the full content of each message using the `get()` method
 
                             try {
-                                return gmailService.users().messages().get(user, email.getId()).execute();
+                                return gmailInstance.users().messages().get(user, email.getId()).execute();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -66,10 +70,13 @@ public class EmailIndexerService {
                             // Set more fields as needed
                         }
                 ).toList();
+
     }
 
     public void saveEmail(Email email) {
+
         emailRepository.save(email);
+        LOG.info("Indexed Email with id {}", email.getId());
     }
 
 
