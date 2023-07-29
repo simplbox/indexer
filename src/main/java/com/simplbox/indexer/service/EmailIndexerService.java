@@ -39,7 +39,7 @@ public class EmailIndexerService {
 
         Gmail gmailInstance = gmailApiClient.getGmailService();
         LOG.info("Loaded Gmail Account of user {}. Fetching Emails", user);
-        String query = preparyDateSearchQuery(runOnce);
+        String query = prepareDateSearchQuery(runOnce);
         List<Message> messages = new ArrayList<>(
                 runOnce ?
                         gmailInstance.users().messages().list(user).execute().getMessages() :
@@ -81,7 +81,7 @@ public class EmailIndexerService {
 
     }
 
-    public String preparyDateSearchQuery(boolean runOnce) {
+    public String prepareDateSearchQuery(boolean runOnce) {
 
         if (runOnce)
             return "";

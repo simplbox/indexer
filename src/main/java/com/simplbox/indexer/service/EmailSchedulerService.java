@@ -29,6 +29,6 @@ public class EmailSchedulerService {
     public void indexDailyMails() throws GeneralSecurityException, IOException {
         List<Email> emails = emailIndexerService.fetchEmails(emailAddress, false);
         emails.forEach(emailIndexerService::saveEmail);
-        LOG.info("Mails indexed method executed at 12:05 am UTC.");
+        LOG.info("Mails indexing method executed at 12:05 am UTC.");
     }
 }
