@@ -16,12 +16,13 @@ public class EmailFilterService {
 
     private static final Logger LOG = LoggerFactory.getLogger(EmailFilterService.class);
     private final EmailRepository emailRepository;
+
     @Autowired
     public EmailFilterService(EmailRepository emailRepository) {
         this.emailRepository = emailRepository;
     }
 
-    public List<Email> filterEmails(RequestPayload requestPayload, int page, int offset){
+    public List<Email> filterEmails(RequestPayload requestPayload, int page, int offset) {
         return emailRepository.findBySenderContainingIgnoreCase(requestPayload.getSender());
     }
 }

@@ -17,6 +17,7 @@ import java.util.List;
 public class EmailFilterController {
 
     private final EmailFilterService emailFilterService;
+
     @Autowired
     public EmailFilterController(EmailFilterService emailFilterService) {
         this.emailFilterService = emailFilterService;

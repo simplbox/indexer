@@ -11,8 +11,11 @@ import java.util.List;
 public interface EmailRepository extends MongoRepository<Email, String> {
     // Add custom query methods if needed
     List<Email> findBySenderContainingIgnoreCase(String sender);
+
     List<Email> findByDate(Date date);
+
     List<Email> findBySubjectContainingIgnoreCase(String keyword);
+
     List<Email> findByBodyContainingIgnoreCase(String keyword);
 }
 

@@ -5,13 +5,18 @@ import com.google.api.services.gmail.model.Message;
 import com.simplbox.indexer.model.Email;
 import com.simplbox.indexer.repository.EmailRepository;
 import com.simplbox.indexer.utils.EmailExtractionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,12 +35,15 @@ public class EmailIndexerService {
         this.gmailApiClient = gmailApiClient;
     }
 
-    public List<Email> fetchEmails(String user) throws IOException, GeneralSecurityException {
-
+    public List<Email> fetchEmails(String user, boolean runOnce) throws IOException, GeneralSecurityException {
 
         Gmail gmailInstance = gmailApiClient.getGmailService();
         LOG.info("Loaded Gmail Account of user {}. Fetching Emails", user);
-        List<Message> messages = gmailInstance.users().messages().list(user).execute().getMessages();
+        String query = preparyDateSearchQuery(runOnce);
+        List<Message> messages = new ArrayList<>(
+                runOnce ?
+                        gmailInstance.users().messages().list(user).execute().getMessages() :
+                        gmailInstance.users().messages().list(user).setQ(query).setMaxResults(200L).execute().getMessages());
         return messages.stream()
                 .map(
                         email ->
@@ -73,8 +81,31 @@ public class EmailIndexerService {
 
     }
 
-    public void saveEmail(Email email) {
+    public String preparyDateSearchQuery(boolean runOnce) {
 
+        if (runOnce)
+            return "";
+        LocalDateTime today = LocalDateTime.now();
+        LocalDateTime yesterday = today.minusDays(1);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+        ZoneId utcZone = ZoneId.of("UTC");
+        ZoneId istZone = ZoneId.of("Asia/Kolkata");
+        ZonedDateTime utcZonedDateTimeToday = today.atZone(utcZone);
+        ZonedDateTime utcZonedDateTimeYesterday = yesterday.atZone(utcZone);
+        ZonedDateTime istZonedDateTimeToday = utcZonedDateTimeToday.withZoneSameInstant(istZone);
+        ZonedDateTime istZonedDateTimeYesterday = utcZonedDateTimeYesterday.withZoneSameInstant(istZone);
+
+        // Format the IST date as a string
+        String istDateStringToday = istZonedDateTimeToday.format(formatter);
+        String istDateStringYesterday = istZonedDateTimeYesterday.format(formatter);
+
+
+        return "after:" + istDateStringYesterday + " " + "before:" + istDateStringToday;
+
+    }
+
+
+    public void saveEmail(Email email) {
         emailRepository.save(email);
         LOG.info("Indexed Email with id {}", email.getId());
     }
