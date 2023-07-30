@@ -37,7 +37,7 @@ public class EmailIndexerService {
 
     public List<Email> fetchEmails(String user, boolean runOnce) throws IOException, GeneralSecurityException {
 
-        Gmail gmailInstance = gmailApiClient.getGmailService();
+        Gmail gmailInstance = gmailApiClient.getGmailServiceThroughOAuth();
         LOG.info("Loaded Gmail Account of user {}. Fetching Emails", user);
         String query = prepareDateSearchQuery(runOnce);
         List<Message> messages = new ArrayList<>(

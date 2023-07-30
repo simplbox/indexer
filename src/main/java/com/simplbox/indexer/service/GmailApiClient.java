@@ -5,6 +5,7 @@ import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInsta
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -21,6 +22,7 @@ import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class GmailApiClient {
@@ -30,17 +32,22 @@ public class GmailApiClient {
     private static final List<String> SCOPES = Collections.singletonList(GmailScopes.GMAIL_READONLY);
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 
-    public Gmail getGmailService() throws GeneralSecurityException, IOException {
+    public Gmail getGmailServiceThroughOAuth() throws GeneralSecurityException, IOException {
         LOG.info("Establishing http connection to Gmail");
-        HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-        Credential credential = authorize(httpTransport);
+        HttpTransport httpTransport = getHttpTransport();
+        Credential credential = authorizeViaOauth(httpTransport);
         LOG.info("Credential Authorised. Connection Established");
-        return new Gmail.Builder(httpTransport, JSON_FACTORY, credential)
-                .setApplicationName(APPLICATION_NAME)
-                .build();
+        return createGmailConnection(credential);
     }
 
-    private Credential authorize(HttpTransport httpTransport) throws IOException {
+    public Gmail getGmailServiceThroughServiceAccount() throws GeneralSecurityException, IOException {
+        GoogleCredential credential = GoogleCredential
+                .fromStream(Objects.requireNonNull(GmailApiClient.class.getResourceAsStream("/static/simplbox-394114-382bb49c76ff.json")))
+                .createScoped(SCOPES);
+        return createGmailConnection(credential);
+    }
+
+    private Credential authorizeViaOauth(HttpTransport httpTransport) throws IOException {
         // Load credentials from the JSON file you downloaded
         LOG.info("Loading credentials");
         InputStream inputStream = GmailApiClient.class.getResourceAsStream("/static/client_secret_542582741095-rb23fi6kp2kg0q3657v6f60gm1ca15vg.apps.googleusercontent.com.json");
@@ -58,4 +65,18 @@ public class GmailApiClient {
         // Authorize the application and get the credentials.
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
+
+    private HttpTransport getHttpTransport() throws GeneralSecurityException, IOException {
+        return GoogleNetHttpTransport.newTrustedTransport();
+    }
+
+    private Gmail createGmailConnection(Credential credential) throws GeneralSecurityException, IOException {
+        return new Gmail.Builder(
+                getHttpTransport(),
+                JSON_FACTORY,
+                credential
+        ).setApplicationName(APPLICATION_NAME).build();
+    }
+
+
 }
