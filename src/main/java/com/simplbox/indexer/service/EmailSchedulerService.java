@@ -25,7 +25,7 @@ public class EmailSchedulerService {
         this.emailIndexerService = emailIndexerService;
     }
 
-    @Scheduled(cron = "0 5 0 * * ?", zone = "UTC")
+    @Scheduled(cron = "0 0 11 * * ?", zone = "Asia/Kolkata")
     public void indexDailyMails() throws GeneralSecurityException, IOException {
         List<Email> emails = emailIndexerService.fetchEmails(emailAddress, false);
         emails.forEach(emailIndexerService::saveEmail);
